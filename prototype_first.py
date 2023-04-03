@@ -9,20 +9,47 @@ TODO:
 1.     
 """
 
-# 123
 
-
-def insta_crawling(ID, PW, headless=False):
+def insta_crawling(ID, PW):
     cl = Client()
     cl.login(ID, PW)
 
-    user_id = cl.user_id_from_username("flatfish._.selfish")
+    user_id = cl.user_id_from_username("flatfist._.selfish")
     medias = cl.user_medias(int(user_id), 10)
+    folder = "test-folder"
+    createDirectory(folder)
     for m in medias:
         try:
-            print(cl.photo_download(int(m.pk)))
+            print(photo_download(cl, m.pk, folder))
         except AssertionError:
             pass
+            
+
+def photo_download(c, pk, folder):
+    media = c.media_info(pk)
+    assert media.media_type == 1, "Must been photo"
+    filename = "{username}_{media_pk}".format(
+            username=media.user.username, media_pk=pk
+        )
+    
+    p = os.path.join(folder, filename + '.jpg')
+    response = requests.get(media.thumbnail_url, stream=True, timeout=c.request_timeout)
+    response.raise_for_status()
+    with open(p, "wb") as f:
+        f.write(response.content)
+    
+    return p
+
+
+def createDirectory(directory):
+    try:
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+    except OSError:
+        print("Error: Failed to create the directory.")
+
+
+def concat_image:
 
 
 st.title('AI color grader')
