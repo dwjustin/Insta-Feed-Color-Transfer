@@ -2,5 +2,4 @@ streamlit
 instagrapi==1.17.3
 pathlib
 opencv-python
-apt-get update
-apt-get -y install libgl1-mesa-glx
+
