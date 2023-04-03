@@ -2,6 +2,10 @@ import streamlit as st
 from PIL import Image
 from instagrapi import Client
 from pathlib import Path
+import requests
+import os
+import cv2
+import numpy as np
 
 
 """
@@ -14,8 +18,8 @@ def insta_crawling(ID, PW):
     cl = Client()
     cl.login(ID, PW)
 
-    user_id = cl.user_id_from_username("flatfist._.selfish")
-    medias = cl.user_medias(int(user_id), 10)
+    user_id = cl.user_id_from_username("flatfish._.selfish")
+    medias = cl.user_medias(int(user_id), 9)
     folder = "test-folder"
     createDirectory(folder)
     for m in medias:
@@ -23,21 +27,22 @@ def insta_crawling(ID, PW):
             print(photo_download(cl, m.pk, folder))
         except AssertionError:
             pass
-            
+
 
 def photo_download(c, pk, folder):
     media = c.media_info(pk)
     assert media.media_type == 1, "Must been photo"
     filename = "{username}_{media_pk}".format(
-            username=media.user.username, media_pk=pk
-        )
-    
+        username=media.user.username, media_pk=pk
+    )
+
     p = os.path.join(folder, filename + '.jpg')
-    response = requests.get(media.thumbnail_url, stream=True, timeout=c.request_timeout)
+    response = requests.get(media.thumbnail_url,
+                            stream=True, timeout=c.request_timeout)
     response.raise_for_status()
     with open(p, "wb") as f:
         f.write(response.content)
-    
+
     return p
 
 
@@ -49,7 +54,49 @@ def createDirectory(directory):
         print("Error: Failed to create the directory.")
 
 
-def concat_image:
+def concat_image(directory):  # test folder 에서 이미지를 받아와서 합해야됨
+
+    def resize_squared_img(img):
+        h, w, c = img.shape
+        if w < h:
+            m = (h-w)//2
+            return img[m:m+w, :], w
+        elif h < w:
+            m = (w-h)//2
+            return img[:, m:m+h], h
+        return img, h
+
+    directory = "./test-folder/"
+    files = os.listdir(directory)
+    print(files)
+    images = []
+    msize = 1000
+
+    for f in files:
+        filename = directory+f
+        img = cv2.imread(filename)
+        img, m = resize_squared_img(img)
+        msize = min(m, msize)
+        images.append(img)
+
+    blank = [np.zeros((msize, msize, 3), np.uint8)]*2
+
+    def hconcat_resize_min(im_list, interpolation=cv2.INTER_CUBIC):
+        global msize
+        im_list_resize = [cv2.resize(im, (msize, msize), interpolation=interpolation)
+                          for im in im_list]
+        return cv2.hconcat(im_list_resize)
+
+    concat_row = []
+    n = len(images)
+    for i in range(0, n, 3):
+        if n-i < 3:
+            break
+        row = hconcat_resize_min(images[i:i+3])
+        concat_row.append(row)
+
+    concat_image = cv2.vconcat(concat_row)
+    cv2.imwrite('concat.png', concat_image)
 
 
 st.title('AI color grader')
