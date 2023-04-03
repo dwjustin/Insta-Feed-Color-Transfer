@@ -74,4 +74,4 @@ else:
 
 # Instagram crawling button
 if st.button("Crawling Instagram"):
-    insta_crawling("jaeu8021", "kvoid2824#")
+    insta_crawling("leessunj", "Ilsj08282!")
