@@ -3,3 +3,4 @@ instagrapi==1.17.3
 pathlib
 
 
+apt install libgl1-mesa-glx
