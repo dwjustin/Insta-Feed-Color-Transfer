@@ -1,5 +1,5 @@
 streamlit
 instagrapi==1.17.3
 pathlib
-opencv-python
+cv2==4.6.0
 
