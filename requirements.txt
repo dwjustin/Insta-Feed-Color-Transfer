@@ -1,3 +1,4 @@
 streamlit
 instagrapi==1.17.3
 pathlib
+cv2
