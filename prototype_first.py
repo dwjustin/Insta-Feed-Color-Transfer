@@ -4,8 +4,6 @@ from instagrapi import Client
 from pathlib import Path
 import requests
 import os
-import cv2
-import numpy as np
 
 
 """
@@ -55,49 +53,65 @@ def createDirectory(directory):
 
 
 def concat_image(directory):  # test folder 에서 이미지를 받아와서 합해야됨
-
+    
     def resize_squared_img(img):
-        h, w, c = img.shape
-        if w < h:
-            m = (h-w)//2
-            return img[m:m+w, :], w
-        elif h < w:
-            m = (w-h)//2
-            return img[:, m:m+h], h
-        return img, h
+        h=img.height
+        w=img.width
+        if w<h:
+            m=(h-w)//2
+            return img.crop((0,m,w,m+w)),w
+        elif h<w:
+            m=(w-h)//2
+            return img.crop((m,0,m+h,h)),h
+        return img,h
 
-    directory = "./test-folder/"
-    files = os.listdir(directory)
+    directory="./img/"
+    files=os.listdir(directory)
     print(files)
-    images = []
-    msize = 1000
+    images=[]
+    msize=1000
 
     for f in files:
-        filename = directory+f
-        img = cv2.imread(filename)
-        img, m = resize_squared_img(img)
-        msize = min(m, msize)
+        filename=directory+f
+        img=Image.open(filename)
+        img,m=resize_squared_img(img)
+        msize=min(m,msize)
         images.append(img)
 
-    blank = [np.zeros((msize, msize, 3), np.uint8)]*2
 
-    def hconcat_resize_min(im_list, interpolation=cv2.INTER_CUBIC):
+
+    def hconcat_resize_pil(im_list):
         global msize
-        im_list_resize = [cv2.resize(im, (msize, msize), interpolation=interpolation)
-                          for im in im_list]
-        return cv2.hconcat(im_list_resize)
+        im_list_resize = [im.resize((msize, msize))
+                        for im in im_list]
+        total_width = msize*len(im_list)
+        dst = Image.new('RGB', (total_width, msize))
+        pos_x = 0
+        for im in im_list_resize:
+            dst.paste(im, (pos_x, 0))
+            pos_x += msize
+        return dst
 
-    concat_row = []
-    n = len(images)
-    for i in range(0, n, 3):
-        if n-i < 3:
+    def vconcat_pil(im_list):
+        global msize
+        total_height = msize*len(im_list)
+        dst = Image.new('RGB', (msize*3, total_height))
+        pos_y = 0
+        for im in im_list:
+            dst.paste(im, (0, pos_y))
+            pos_y += msize
+        return dst
+
+    concat_row=[]
+    n=len(images)
+    for i in range(0,n,3):
+        if n-i<3:
             break
-        row = hconcat_resize_min(images[i:i+3])
+        row=hconcat_resize_pil(images[i:i+3])
         concat_row.append(row)
 
-    concat_image = cv2.vconcat(concat_row)
-    cv2.imwrite('concat.png', concat_image)
-
+    concat_image = vconcat_pil(concat_row)
+    concat_image.save('concat.png')
 
 st.title('AI color grader')
 st.subheader('Find the filter that best fits your Instagram feed!')
