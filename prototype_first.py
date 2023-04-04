@@ -52,7 +52,7 @@ def createDirectory(directory):
         print("Error: Failed to create the directory.")
 
 
-def concat_image(directory):  # test folder 에서 이미지를 받아와서 합해야됨
+def concat_image(files):  # test folder 에서 이미지를 받아와서 합해야됨
 
     def resize_squared_img(img):
         h = img.height
@@ -65,21 +65,20 @@ def concat_image(directory):  # test folder 에서 이미지를 받아와서 합
             return img.crop((m, 0, m+h, h)), h
         return img, h
 
-    directory = "./img/"
-    files = os.listdir(directory)
-    print(files)
+    # directory = "./img/"
+    # files = os.listdir(directory)
+    # print(files)
     images = []
     msize = 1000
 
     for f in files:
-        filename = directory+f
-        img = Image.open(filename)
+        img = f
         img, m = resize_squared_img(img)
         msize = min(m, msize)
         images.append(img)
 
     def hconcat_resize_pil(im_list):
-        global msize
+        msize = 1000
         im_list_resize = [im.resize((msize, msize))
                           for im in im_list]
         total_width = msize*len(im_list)
@@ -91,7 +90,7 @@ def concat_image(directory):  # test folder 에서 이미지를 받아와서 합
         return dst
 
     def vconcat_pil(im_list):
-        global msize
+        msize = 1000
         total_height = msize*len(im_list)
         dst = Image.new('RGB', (msize*3, total_height))
         pos_y = 0
@@ -109,56 +108,67 @@ def concat_image(directory):  # test folder 에서 이미지를 받아와서 합
         concat_row.append(row)
 
     concat_image = vconcat_pil(concat_row)
-    concat_image.save('concat.png')
+    st.image(concat_image)
+    # concat_image.save('concat.png')
 
 
 st.title('AI color grader')
 st.subheader('Find the filter that best fits your Instagram feed!')
-# uploaded_files = st.file_uploader(label="Choose image(s)...",
-#                                   type=['jpeg', 'png', 'jpg', 'heic'],
-#                                   label_visibility='visible',
-#                                   accept_multiple_files=True)
+
+with st.container():
+    col1, col2 = st.columns(2)
+    with col1:
+        uploaded_files = st.file_uploader(label="Choose image(s) for AI to analyze!",
+                                          type=['jpeg', 'png', 'jpg', 'heic'],
+                                          label_visibility='visible',
+                                          accept_multiple_files=True)
+
+    with col2:
+        target_file = st.file_uploader(label="Choose an image to apply color correction!",
+                                       type=['jpeg', 'png', 'jpg', 'heic'],
+                                       label_visibility='visible',
+                                       accept_multiple_files=False)
+
+crawled = []
+# Check if the user has uploaded any files
+if uploaded_files or crawled:
+    # Create an empty list to store the images
+    images = []
+
+    # Loop through each uploaded file and append the opened image to the list
+    for file in uploaded_files:
+        image = Image.open(file)
+        images.append(image)
+
+    # Calculate the number of rows and columns needed to display the images in a 3x3 grid
+    # num_images = len(images)
+    # num_rows = (num_images + 2) // 3
+    # num_cols = min(num_images, 3)
+
+    # # Set the desired width and height of the images in the grid
+    # image_width = 200
+
+    # Loop through each row and column to display the images in a grid
+    # for i in range(num_rows):
+    #     cols = st.columns(num_cols)
+    #     for j in range(num_cols):
+    #         index = i * 3 + j
+    #         if index < num_images:
+    #             cols[j].image(
+    #                 images[index],
+    #                 caption=f"{uploaded_files[index].name}",
+    #                 width=image_width)
+    # center_button = st.container()
+    # with center_button:
+    #     st.button("Process Images!")
+    if st.button("Process Images!"):
+        concat_image(images)
+        st.write("Images are processed")
 
 
-# crawled = []
-# # Check if the user has uploaded any files
-# if uploaded_files or crawled:
-#     # Create an empty list to store the images
-#     images = []
-
-#     # Loop through each uploaded file and append the opened image to the list
-#     for file in uploaded_files:
-#         image = Image.open(file)
-#         images.append(image)
-
-#     # Calculate the number of rows and columns needed to display the images in a 3x3 grid
-#     num_images = len(images)
-#     num_rows = (num_images + 2) // 3
-#     num_cols = min(num_images, 3)
-
-#     # Set the desired width and height of the images in the grid
-#     image_width = 200
-
-#     # Loop through each row and column to display the images in a grid
-#     for i in range(num_rows):
-#         cols = st.columns(num_cols)
-#         for j in range(num_cols):
-#             index = i * 3 + j
-#             if index < num_images:
-#                 cols[j].image(
-#                     images[index],
-#                     caption=f"{uploaded_files[index].name}",
-#                     width=image_width)
-#     # center_button = st.container()
-#     # with center_button:
-#     #     st.button("Process Images", text_align='center')
-#     if st.button("Process Images!"):
-#         st.write("Images are processed")
-
-
-# else:
-#     # If no files were uploaded, display a message
-#     st.write("Please upload one or more image files.")
+else:
+    # If no files were uploaded, display a message
+    st.write("Please upload one or more image files.")
 
 insta_id = st.text_input("Put your Instagram ID here!")
 insta_pwd = st.text_input('Put your Instagram password here!')
